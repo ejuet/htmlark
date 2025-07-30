@@ -69,10 +69,21 @@ def _get_resource(resource_url: str) -> (str, bytes):
         with open(resource_url, 'rb') as f:
             data = f.read()
         mimetype, _ = mimetypes.guess_type(resource_url)
+    elif len(url_parsed.scheme) == 1 and url_parsed.scheme.isalpha():
+        # Windows drive letter, treat as local file
+        with open(resource_url, 'rb') as f:
+            data = f.read()
+        mimetype, _ = mimetypes.guess_type(resource_url)
     elif url_parsed.scheme == 'data':
         raise ValueError("Resource path is a data URI", url_parsed.scheme)
     else:
         raise ValueError("Not local path or HTTP/HTTPS URL", url_parsed.scheme)
+
+    # replace \r\n with \n
+    if isinstance(data, bytes):
+        data = data.replace(b'\r\n', b'\n')
+    else:
+        data = data.replace('\r\n', '\n')
 
     return mimetype, data
 
